@@ -15,7 +15,7 @@ Markdown 파일을 한글 지원 PDF로 변환하는 Claude Code 스킬입니다
 ### 방법 1: tar.gz 다운로드 (권장)
 
 ```bash
-curl -L https://github.com/daht-mad/md2pdf/raw/master/md2pdf.tar.gz | tar -xz -C .claude/skills/
+mkdir -p .claude/skills && curl -L https://github.com/daht-mad/md2pdf/raw/master/md2pdf.tar.gz | tar -xz -C .claude/skills/
 ```
 
 ### 방법 2: Git clone
