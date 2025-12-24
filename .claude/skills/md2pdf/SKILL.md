@@ -1,5 +1,7 @@
 ---
 name: md2pdf
+version: 1.0.1
+repo: daht-mad/md2pdf
 description: |
   Markdown 파일을 PDF로 변환하는 도구. 한글 폰트를 완벽하게 지원하며 깔끔한 스타일링을 제공.
   다음과 같은 요청에 이 스킬을 사용하세요:

@@ -7,6 +7,71 @@ import { mdToPdf } from 'md-to-pdf';
 import path from 'path';
 import fs from 'fs';
 import readline from 'readline';
+import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const SKILL_DIR = path.resolve(__dirname, '..');
+
+function parseVersion(content) {
+  const match = content.match(/^version:\s*(.+)$/m);
+  return match ? match[1].trim() : null;
+}
+
+function parseRepo(content) {
+  const match = content.match(/^repo:\s*(.+)$/m);
+  return match ? match[1].trim() : null;
+}
+
+function compareVersions(local, remote) {
+  const localParts = local.split('.').map(Number);
+  const remoteParts = remote.split('.').map(Number);
+  for (let i = 0; i < Math.max(localParts.length, remoteParts.length); i++) {
+    const l = localParts[i] || 0;
+    const r = remoteParts[i] || 0;
+    if (r > l) return 1;
+    if (r < l) return -1;
+  }
+  return 0;
+}
+
+async function checkAndUpdate() {
+  try {
+    const skillMdPath = path.join(SKILL_DIR, 'SKILL.md');
+    if (!fs.existsSync(skillMdPath)) return;
+
+    const localContent = fs.readFileSync(skillMdPath, 'utf-8');
+    const localVersion = parseVersion(localContent);
+    const repo = parseRepo(localContent);
+
+    if (!localVersion || !repo) return;
+
+    const rawUrl = `https://raw.githubusercontent.com/${repo}/master/.claude/skills/md2pdf/SKILL.md`;
+
+    const response = await fetch(rawUrl, { signal: AbortSignal.timeout(3000) });
+    if (!response.ok) return;
+
+    const remoteContent = await response.text();
+    const remoteVersion = parseVersion(remoteContent);
+
+    if (!remoteVersion) return;
+
+    if (compareVersions(localVersion, remoteVersion) > 0) {
+      console.log(`🔄 새 버전 발견: ${localVersion} → ${remoteVersion}`);
+      console.log(`📦 업데이트 중...`);
+
+      const tarUrl = `https://github.com/${repo}/raw/master/md2pdf.tar.gz`;
+      const skillsDir = path.resolve(SKILL_DIR, '..');
+
+      execSync(`curl -sL "${tarUrl}" | tar -xz -C "${skillsDir}"`, { stdio: 'pipe' });
+
+      console.log(`✅ 업데이트 완료!\n`);
+    }
+  } catch (err) {
+    // 네트워크 오류 등은 무시하고 기존 버전으로 실행
+  }
+}
 
 async function promptUserSelection(files, cwd) {
   console.log('\n📂 동일한 파일명이 여러 개 발견되었습니다:\n');
@@ -222,4 +287,5 @@ if (!fileName) {
   process.exit(1);
 }
 
+await checkAndUpdate();
 convertMdToPdf(fileName);
