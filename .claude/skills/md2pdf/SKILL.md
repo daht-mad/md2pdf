@@ -13,46 +13,71 @@ description: |
 
 # md2pdf
 
-Markdown 파일을 한글 지원 PDF로 변환하는 스킬.
+Markdown을 한글 지원 PDF로 변환합니다.
 
-## 의존성 설치 (최초 1회)
+## 비개발자 가이드
 
-```bash
-npm install md-to-pdf
-```
-
-## 사용법
+**설치 (터미널에서 한 줄 실행 후 Claude Code 재시작):**
 
 ```bash
-node scripts/md2pdf.mjs <파일명>
+mkdir -p .claude/skills && curl -L https://github.com/daht-mad/md2pdf/archive/refs/heads/master.tar.gz | tar -xz -C /tmp && mv /tmp/md2pdf-master .claude/skills/md2pdf
 ```
 
-**예시:**
+**사용:** Claude에게 "README.md를 PDF로 변환해줘" 라고 말하세요.
+
+**결과:** 원본 파일과 같은 폴더에 PDF 생성 (예: `docs/guide.md` → `docs/guide.pdf`)
+
+---
+
+## 실행
+
+의존성 설치 후 스크립트 실행:
 
 ```bash
-# 파일명만 (프로젝트 전체에서 검색)
-node scripts/md2pdf.mjs README.md
-
-# 상대 경로
-node scripts/md2pdf.mjs ./docs/guide.md
-
-# 절대 경로
-node scripts/md2pdf.mjs /Users/username/file.md
+npm install md-to-pdf && node scripts/md2pdf.mjs <파일명>
 ```
 
-## 주요 기능
+## 파일 검색
 
-- 프로젝트 전체 재귀 검색: 파일명만 입력하면 하위 디렉토리까지 자동 검색
-- 중복 파일 처리: 동일한 파일명이 여러 개 있을 경우 선택 가능
-- 한글 폰트 지원 (맑은 고딕, Apple Gothic)
-- 깔끔한 스타일링 (파란색 헤딩, 표 스타일링, 코드 블록 하이라이팅)
-- 원본 MD 파일과 같은 디렉토리에 PDF 생성
+- 파일명만 입력 시 프로젝트 전체 검색 (최대 5단계, 숨김폴더 제외)
+- 동일 파일명 여러 개 발견 시 번호로 선택
 
-## PDF 스타일
+## 스타일
 
-- 페이지: A4
-- 여백: 상하좌우 20mm
-- 폰트: 시스템 기본 폰트 (한글 지원)
+- A4, 여백 20mm
 - 헤딩: 파란색 (#2563eb)
-- 표: 회색 테두리 및 헤더 배경
 - 코드: 회색 배경 (#f3f4f6)
+- 한글 폰트: 맑은 고딕, Apple Gothic
+
+## 스크립트
+
+실행 스크립트: [md2pdf.mjs](scripts/md2pdf.mjs)
+
+## 자동 업데이트
+
+이 스킬 실행 전, 버전을 확인하고 업데이트가 있으면 적용하세요.
+
+1. 현재 버전: frontmatter의 `version` 필드
+1. 원격 버전 확인:
+
+   ```bash
+   curl -s https://raw.githubusercontent.com/daht-mad/md2pdf/master/.claude/skills/md2pdf/SKILL.md | head -5 | grep "^version:"
+   ```
+
+1. 버전이 다르면 업데이트:
+
+   ```bash
+   rm -rf .claude/skills/md2pdf && mkdir -p .claude/skills && curl -L https://github.com/daht-mad/md2pdf/archive/refs/heads/master.tar.gz | tar -xz -C /tmp && mv /tmp/md2pdf-master .claude/skills/md2pdf
+   ```
+
+1. 업데이트 완료 시 알림: `🔄 md2pdf 업데이트 완료: v{old} → v{new}`
+
+## 버그 수정 기여
+
+이 스킬을 사용하다가 버그를 발견하고 수정했다면, 원작자에게 PR을 보내 다른 사용자들도 수정사항을 받을 수 있게 해주세요.
+
+```bash
+python3 .claude/skills/create-tool/scripts/contribute_fix.py .claude/skills/md2pdf --message "버그 설명"
+```
+
+> **참고**: create-tool 스킬이 설치되어 있어야 합니다.
