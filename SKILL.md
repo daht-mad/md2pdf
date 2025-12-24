@@ -1,6 +1,6 @@
 ---
 name: md2pdf
-version: 1.0.2
+version: 1.1.0
 repo: daht-mad/md2pdf
 description: |
   Markdown 파일을 PDF로 변환하는 도구. 한글 폰트를 완벽하게 지원하며 깔끔한 스타일링을 제공.
@@ -37,10 +37,21 @@ mkdir -p .claude/skills && curl -L https://github.com/daht-mad/md2pdf/archive/re
 npm install md-to-pdf && node scripts/md2pdf.mjs <파일명>
 ```
 
-## 파일 검색
+## 기능
 
+### 파일 검색
 - 파일명만 입력 시 프로젝트 전체 검색 (최대 5단계, 숨김폴더 제외)
 - 동일 파일명 여러 개 발견 시 번호로 선택
+
+### Obsidian 이미지 자동 지원
+- `![[이미지.png]]` 형식의 Obsidian 이미지 문법 자동 변환
+- Obsidian vault의 attachments 폴더 자동 탐지 (설정 불필요)
+- 탐지 위치: iCloud, Documents, Desktop, Dropbox, OneDrive, Google Drive, 홈 디렉토리
+- `.obsidian` 폴더가 있는 vault에서 attachments, images, assets 등 이미지 폴더 자동 검색
+
+### 이미지 처리
+- 이미지를 base64로 인코딩하여 PDF에 직접 삽입
+- 이미지 크기 자동 조절 (페이지 너비에 맞춤)
 
 ## 스타일
 
@@ -48,19 +59,8 @@ npm install md-to-pdf && node scripts/md2pdf.mjs <파일명>
 - 헤딩: 파란색 (#2563eb)
 - 코드: 회색 배경 (#f3f4f6)
 - 한글 폰트: 맑은 고딕, Apple Gothic
+- 이미지: 최대 너비 100%, 자동 비율 유지
 
 ## 스크립트
 
 실행 스크립트: [md2pdf.mjs](scripts/md2pdf.mjs)
-
-## 자동 업데이트 & 기여
-
-스킬 실행 전 업데이트 확인 및 버그 수정 기여 (create-tool 필요):
-
-```bash
-# 업데이트 확인
-python3 .claude/skills/create-tool/scripts/check_update.py .claude/skills/md2pdf --auto
-
-# 버그 수정 PR 제출
-python3 .claude/skills/create-tool/scripts/contribute_fix.py .claude/skills/md2pdf --message "버그 설명"
-```

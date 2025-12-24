@@ -203,7 +203,110 @@ th { background-color: #f3f4f6; font-weight: bold; }
 td { vertical-align: top; }
 ul, ol { margin: 8px 0; padding-left: 24px; }
 li { margin: 4px 0; }
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 12px 0;
+}
 `;
+
+function getImageMimeType(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  const mimeTypes = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml',
+  };
+  return mimeTypes[ext] || 'image/png';
+}
+
+// Auto-detect Obsidian vault by finding .obsidian folders
+function findObsidianAttachments() {
+  const home = process.env.HOME;
+  const paths = [];
+
+  // Common locations where Obsidian vaults might be
+  const searchRoots = [
+    path.join(home, 'Library/Mobile Documents/iCloud~md~obsidian/Documents'), // macOS iCloud
+    path.join(home, 'Documents'),
+    path.join(home, 'Desktop'),
+    path.join(home, 'Dropbox'),
+    path.join(home, 'OneDrive'),
+    path.join(home, 'Google Drive'),
+    home,
+  ];
+
+  const attachmentFolders = ['attachments', 'Attachments', 'assets', 'Assets', 'images', 'Images', '99. Attachments', 'files', 'Files'];
+
+  for (const root of searchRoots) {
+    if (!fs.existsSync(root)) continue;
+
+    try {
+      const entries = fs.readdirSync(root, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+        const folderPath = path.join(root, entry.name);
+
+        // Check if this is an Obsidian vault (has .obsidian folder)
+        const isObsidianVault = fs.existsSync(path.join(folderPath, '.obsidian'));
+
+        if (isObsidianVault) {
+          // Add attachment folders from this vault
+          for (const folder of attachmentFolders) {
+            const attachPath = path.join(folderPath, folder);
+            if (fs.existsSync(attachPath)) {
+              paths.push(attachPath);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // ignore errors
+    }
+  }
+
+  return paths;
+}
+
+const OBSIDIAN_ATTACHMENTS = findObsidianAttachments();
+
+function convertObsidianImages(content, mdDir) {
+  // Convert Obsidian image syntax ![[image.png]] to standard markdown with base64
+  // Also handles ![[image.png|alt text]] format
+  return content.replace(/!\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g, (_, filename, altText) => {
+    const alt = altText || filename;
+    // Check if file exists in same directory, common folders, or additional paths
+    const possiblePaths = [
+      path.join(mdDir, filename),
+      path.join(mdDir, 'attachments', filename),
+      path.join(mdDir, 'images', filename),
+      path.join(mdDir, 'assets', filename),
+    ];
+
+    // Add auto-detected Obsidian attachment paths
+    for (const obsidianPath of OBSIDIAN_ATTACHMENTS) {
+      possiblePaths.push(path.join(obsidianPath, filename));
+    }
+
+    for (const imgPath of possiblePaths) {
+      if (fs.existsSync(imgPath)) {
+        // Read image and convert to base64 data URI
+        const imageBuffer = fs.readFileSync(imgPath);
+        const base64 = imageBuffer.toString('base64');
+        const mimeType = getImageMimeType(filename);
+        return `![${alt}](data:${mimeType};base64,${base64})`;
+      }
+    }
+
+    // If image not found, return placeholder text
+    console.log(`⚠️  이미지를 찾을 수 없음: ${filename}`);
+    return `[이미지: ${filename}]`;
+  });
+}
 
 async function convertMdToPdf(fileName) {
   try {
@@ -250,11 +353,15 @@ async function convertMdToPdf(fileName) {
 
     console.log(`🔄 PDF 변환 중...`);
 
+    // Read and preprocess markdown content (convert Obsidian syntax)
+    let mdContent = fs.readFileSync(mdPath, 'utf-8');
+    mdContent = convertObsidianImages(mdContent, mdDir);
+
     const cssPath = path.join(mdDir, '.temp-pdf-style.css');
     fs.writeFileSync(cssPath, CSS_CONTENT);
 
     const pdf = await mdToPdf(
-      { path: mdPath },
+      { content: mdContent },
       {
         basedir: mdDir,
         dest: pdfPath,
