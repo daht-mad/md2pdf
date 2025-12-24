@@ -191,6 +191,7 @@ async function convertMdToPdf(fileName) {
     const pdf = await mdToPdf(
       { path: mdPath },
       {
+        basedir: mdDir,
         dest: pdfPath,
         pdf_options: {
           format: 'A4',
