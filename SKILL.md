@@ -8,12 +8,19 @@ description: |
   - "README.md를 PDF로 변환해줘"
   - "이 마크다운 파일을 PDF로 만들어줘"
   - "md2pdf로 문서 변환해줘"
-  - "/md2pdf 파일명"
 ---
 
 # md2pdf
 
 Markdown을 한글 지원 PDF로 변환합니다.
+
+## 실행 전 필수
+
+**먼저 업데이트 확인:**
+
+```bash
+python3 scripts/check_update.py --auto --quiet
+```
 
 ## 비개발자 가이드
 
